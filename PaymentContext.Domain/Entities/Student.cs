@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Flunt.Validations;
 using PaymentContext.Domain.ValueObjects;
 using PaymentContext.Shared.Entities;
 
@@ -14,6 +15,7 @@ namespace PaymentContext.Domain.Entities
             Document = document;
             Email = email;
             _subscription = new List<Subscription>();
+            AddNotifications(name,document, email);
         }
         public Student(Name name, Document document, Email email, Active active)
         {
@@ -22,6 +24,7 @@ namespace PaymentContext.Domain.Entities
             Email = email;
             Active = active;
             _subscription = new List<Subscription>();
+            AddNotifications(name,document, email);
         }
         public Student(Name name, Document document, Email email, Address address, Active active)
         {
@@ -31,6 +34,8 @@ namespace PaymentContext.Domain.Entities
             Address = address;
             Active = active;
             _subscription = new List<Subscription>();
+           
+           AddNotifications(name, document, email);
         }
 
         public Name Name { get; private set; }
@@ -48,15 +53,23 @@ namespace PaymentContext.Domain.Entities
 
         //     Active.Activate(active);
         // }
+        
         public void AddSubscription(Subscription subscription)
         {
-            // Se tiver uma assinatura ativa
-            //Cancela todas as outras assinaturas e deixa a nova como principal
+            
+            var hasSubscriptionActive = false;
 
-            foreach(var sub in Subscriptions){
-                sub.Activate(false);
+            foreach(var sub in _subscription){
+                if(sub.Active)
+                    hasSubscriptionActive = true;
+                //sub.Activate(false);
             }
-            _subscription.Add(subscription);
+            AddNotifications(new Contract<Student>()
+                .Requires()
+                .IsFalse(hasSubscriptionActive,"Student.Subscriptions","Voce já possui uma assinatura ativa")
+            );
+            if(hasSubscriptionActive)
+                _subscription.Add(subscription);
         }
         
     }
